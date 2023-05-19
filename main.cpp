@@ -57,7 +57,7 @@ extern "C" void OnModPreLoad()
                 nCurrentGame = pWorkingModule->GetGameEnum();
                 pActiveModule = pWorkingModule;
 
-                logger->Info("Got the module loaded!\n\nGame: %s\nConfig: %s.ini\nLibrary: %s (base: 0x%X)", pWorkingModule->GetGameName(), pWorkingModule->GetConfigName(), pWorkingModule->GetLibName(), pGameAddr);
+                logger->Info("Got the module loaded!\nGame: %s\nConfig: %s.ini\nLibrary: %s (base: 0x%X)", pWorkingModule->GetGameName(), pWorkingModule->GetConfigName(), pWorkingModule->GetLibName(), pGameAddr);
 
                 break;
             }

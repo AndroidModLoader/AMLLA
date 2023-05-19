@@ -10,19 +10,21 @@ extern uintptr_t pGameAddr;
 extern void* hGameHndl;
 
 extern bool RegisterLAModule(ILAModule* module);
-#define REG_MODULE(__cls) \
-    static __cls Module_##__cls; static bool Loaded_##__cls = RegisterLAModule(&Module_##__cls);
 
 enum eLoadedGame
 {
     UnknownGame = 0,
 
     GTA_SA,
+    GTA_VC,
+    GTA_3,
 };
 
 class ILAModule
 {
 public:
+    ILAModule() { RegisterLAModule(this); }
+
     virtual const char* GetGameName() = 0;
     virtual const char* GetLibName() = 0;
     virtual const char* GetConfigName() = 0;
