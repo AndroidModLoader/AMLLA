@@ -3,6 +3,8 @@
 // HOOKS DECLARATION
 DECL_HOOKv(PoolsInit)
 {
+    CSAPool* tmpPool;
+
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools25ms_pPtrNodeSingleLinkPoolE")) = 
         AllocatePool(cfg->GetInt("PtrNodeSingle", 70000, "PoolLimits"), 0x8);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools25ms_pPtrNodeDoubleLinkPoolE")) = 
@@ -41,14 +43,54 @@ DECL_HOOKv(PoolsInit)
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN9CColStore11ms_pColPoolE")) = 
         AllocatePool(cfg->GetInt("Collisions", 255, "PoolLimits"), 0x2C);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN17CEntryExitManager17mp_poolEntryExitsE")) = 
-        AllocatePool(cfg->GetInt("EntryExits", 455, "PoolLimits"), 0x3C);
+        (tmpPool=AllocatePool(cfg->GetInt("EntryExits", 455, "PoolLimits"), 0x3C));
+        ((char*)tmpPool)[17] = 1; // m_bIsLocked = true
+    *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN9CIplStore8ms_pPoolE")) = 
+        AllocatePool(cfg->GetInt("IplStore", 256, "PoolLimits"), 0x34);
+    *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN13CQuadTreeNode20ms_pQuadTreeNodePoolE")) = 
+        AllocatePool(cfg->GetInt("QuadTreeNodes", 400, "PoolLimits"), 0x28);
+    *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN17CStuntJumpManager17mp_poolStuntJumpsE")) = 
+        AllocatePool(cfg->GetInt("StuntJumps", 256, "PoolLimits"), 0x44);
+}
+
+int PickUpsCount, PickUpsAlloced;
+uintptr_t PickUpsInit_BackTo;
+__attribute__((optnone)) __attribute__((naked)) void PickUpsInit_Patch(void)
+{
+    // Original
+    asm("ADDS R3, #0x20");
+    asm("STRH.W R12, [R2,#0x1A]");
+
+    asm("PUSH {R0}");
+    asm volatile("CMP R3, %0\n" :: "r"(PickUpsAlloced));
+    asm volatile("MOV R4, %0\n" :: "r"(PickUpsInit_BackTo));
+    asm("POP {R0}\nBX R4");
 }
 
 // GENERIC FUNCTIONS
-static void PoolsPatch()
+static void* __return_0(...) { return NULL; }
+static void PatchPools()
 {
+    // Quad nodes
+    aml->Redirect(aml->GetSym(hGameHndl, "_ZN13CQuadTreeNode8InitPoolEv"), (uintptr_t)__return_0);
     // EntryExits
-    aml->PlaceB(pGameAddr + 0x304A1C + 0x1, pGameAddr + 0x304A94 + 0x1);
+    //aml->PlaceB(pGameAddr + 0x304A1C + 0x1, pGameAddr + 0x304A8C + 0x1);
+    //aml->PlaceNOP(pGameAddr + 0x304A8E + 0x1, 3);
+    // Stunt jumps
+    aml->PlaceB(pGameAddr + 0x361514 + 0x1, pGameAddr + 0x361574 + 0x1);
+    aml->PlaceNOP(pGameAddr + 0x361584 + 0x1, 1);
+}
+
+void PatchPickUpsPools()
+{
+    PickUpsCount = cfg->GetInt("PickUps", 620, "PoolLimits");
+    PickUpsAlloced = 0x20 * PickUpsCount;
+    void* pickupsPool = new char[PickUpsAlloced] {0};
+    aml->Unprot(pGameAddr + 0x678BF8, sizeof(void*));
+    *(void**)(pGameAddr + 0x678BF8) = pickupsPool;
+
+    PickUpsInit_BackTo = pGameAddr + 0x31CFA2 + 0x1;
+    aml->Redirect(pGameAddr + 0x31CF98 + 0x1, (uintptr_t)PickUpsInit_Patch);
 }
 
 // CLASS DESCRIPTION
@@ -61,11 +103,11 @@ public:
     }
     void GameLoaded();
 } GTASA_2_00_Module;
-//REG_MODULE(GTASA_2_00);
 
 void GTASA_2_00::GameLoaded()
 {
     // Pools
-    //PoolsPatch();
+    PatchPools();
+    //PatchPickUpsPools();
     HOOKPLT(PoolsInit, pGameAddr + 0x672468);
 }
