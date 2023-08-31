@@ -1,56 +1,59 @@
 #include "la_gtasa.h"
 
+#define ADJUSTED_POOL_LIMIT(__var) (int)(2 * __var)
+#define SIZEOF_CARGEN 32
+
 // HOOKS DECLARATION
 DECL_HOOKv(PoolsInit)
 {
     CSAPool* tmpPool;
 
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools25ms_pPtrNodeSingleLinkPoolE")) = 
-        AllocatePool(cfg->GetInt("PtrNodeSingle", 70000, "PoolLimits"), 0x8);
+        AllocatePool(cfg->GetInt("PtrNodeSingle", ADJUSTED_POOL_LIMIT(70000), "PoolLimits"), 0x8);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools25ms_pPtrNodeDoubleLinkPoolE")) = 
-        AllocatePool(cfg->GetInt("PtrNodeDouble", 3200, "PoolLimits"), 0xC);
+        AllocatePool(cfg->GetInt("PtrNodeDouble", ADJUSTED_POOL_LIMIT(3200), "PoolLimits"), 0xC);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools21ms_pEntryInfoNodePoolE")) = 
-        AllocatePool(cfg->GetInt("EntryInfoNode", 500, "PoolLimits"), 20);
+        AllocatePool(cfg->GetInt("EntryInfoNode", ADJUSTED_POOL_LIMIT(500), "PoolLimits"), 20);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools11ms_pPedPoolE")) = 
-        AllocatePool(cfg->GetInt("Peds", 140, "PoolLimits"), 1996);
+        AllocatePool(cfg->GetInt("Peds", ADJUSTED_POOL_LIMIT(140), "PoolLimits"), 1996);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools15ms_pVehiclePoolE")) = 
-        AllocatePool(cfg->GetInt("Vehicles", 110, "PoolLimits"), 2604);
+        AllocatePool(cfg->GetInt("Vehicles", ADJUSTED_POOL_LIMIT(110), "PoolLimits"), 2604);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools16ms_pBuildingPoolE")) = 
-        AllocatePool(cfg->GetInt("Buildings", 13000, "PoolLimits"), 0x3C);
+        AllocatePool(cfg->GetInt("Buildings", ADJUSTED_POOL_LIMIT(13000), "PoolLimits"), 0x3C);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools14ms_pObjectPoolE")) = 
-        AllocatePool(cfg->GetInt("Objects", 350, "PoolLimits"), 420);
+        AllocatePool(cfg->GetInt("Objects", ADJUSTED_POOL_LIMIT(350), "PoolLimits"), 420);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools13ms_pDummyPoolE")) = 
-        AllocatePool(cfg->GetInt("Dummys", 2500, "PoolLimits"), 0x3C);
+        AllocatePool(cfg->GetInt("Dummys", ADJUSTED_POOL_LIMIT(2500), "PoolLimits"), 0x3C);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools16ms_pColModelPoolE")) = 
-        AllocatePool(cfg->GetInt("ColModel", 10150, "PoolLimits"), 48);
+        AllocatePool(cfg->GetInt("ColModel", ADJUSTED_POOL_LIMIT(10150), "PoolLimits"), 48);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools12ms_pTaskPoolE")) = 
-        AllocatePool(cfg->GetInt("Task", 500, "PoolLimits"), 128);
+        AllocatePool(cfg->GetInt("Task", ADJUSTED_POOL_LIMIT(500), "PoolLimits"), 128);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools13ms_pEventPoolE")) = 
-        AllocatePool(cfg->GetInt("Event", 200, "PoolLimits"), 68);
+        AllocatePool(cfg->GetInt("Event", ADJUSTED_POOL_LIMIT(200), "PoolLimits"), 68);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools18ms_pPointRoutePoolE")) = 
-        AllocatePool(cfg->GetInt("PointRoute", 64, "PoolLimits"), 100);
+        AllocatePool(cfg->GetInt("PointRoute", ADJUSTED_POOL_LIMIT(64), "PoolLimits"), 100);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools19ms_pPatrolRoutePoolE")) = 
-        AllocatePool(cfg->GetInt("PatrolRoute", 32, "PoolLimits"), 420);
+        AllocatePool(cfg->GetInt("PatrolRoute", ADJUSTED_POOL_LIMIT(32), "PoolLimits"), 420);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools17ms_pNodeRoutePoolE")) = 
-        AllocatePool(cfg->GetInt("NodeRoute", 64, "PoolLimits"), 36);
+        AllocatePool(cfg->GetInt("NodeRoute", ADJUSTED_POOL_LIMIT(64), "PoolLimits"), 36);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools21ms_pTaskAllocatorPoolE")) = 
-        AllocatePool(cfg->GetInt("TaskAllocator", 16, "PoolLimits"), 32);
+        AllocatePool(cfg->GetInt("TaskAllocator", ADJUSTED_POOL_LIMIT(16), "PoolLimits"), 32);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools23ms_pPedIntelligencePoolE")) = 
-        AllocatePool(cfg->GetInt("PedIntelligence", 140, "PoolLimits"), 664);
+        AllocatePool(cfg->GetInt("PedIntelligence", ADJUSTED_POOL_LIMIT(140), "PoolLimits"), 664);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools20ms_pPedAttractorPoolE")) = 
-        AllocatePool(cfg->GetInt("PedAttractors", 64, "PoolLimits"), 236);
+        AllocatePool(cfg->GetInt("PedAttractors", ADJUSTED_POOL_LIMIT(64), "PoolLimits"), 236);
         
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN9CColStore11ms_pColPoolE")) = 
-        AllocatePool(cfg->GetInt("Collisions", 255, "PoolLimits"), 0x2C);
+        AllocatePool(cfg->GetInt("Collisions", ADJUSTED_POOL_LIMIT(255), "PoolLimits"), 0x2C);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN17CEntryExitManager17mp_poolEntryExitsE")) = 
-        (tmpPool=AllocatePool(cfg->GetInt("EntryExits", 455, "PoolLimits"), 0x3C));
+        (tmpPool=AllocatePool(cfg->GetInt("EntryExits", ADJUSTED_POOL_LIMIT(455), "PoolLimits"), 0x3C));
         ((char*)tmpPool)[17] = 1; // m_bIsLocked = true
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN9CIplStore8ms_pPoolE")) = 
-        AllocatePool(cfg->GetInt("IplStore", 256, "PoolLimits"), 0x34);
+        AllocatePool(cfg->GetInt("IplStore", ADJUSTED_POOL_LIMIT(256), "PoolLimits"), 0x34);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN13CQuadTreeNode20ms_pQuadTreeNodePoolE")) = 
-        AllocatePool(cfg->GetInt("QuadTreeNodes", 400, "PoolLimits"), 0x28);
+        AllocatePool(cfg->GetInt("QuadTreeNodes", ADJUSTED_POOL_LIMIT(400), "PoolLimits"), 0x28);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN17CStuntJumpManager17mp_poolStuntJumpsE")) = 
-        AllocatePool(cfg->GetInt("StuntJumps", 256, "PoolLimits"), 0x44);
+        AllocatePool(cfg->GetInt("StuntJumps", ADJUSTED_POOL_LIMIT(256), "PoolLimits"), 0x44);
 }
 
 int PickUpsCount, PickUpsAlloced;
@@ -112,7 +115,7 @@ extern "C" uintptr_t SearchLights_Inject(int val)
 __attribute__((optnone)) __attribute__((naked)) void SearchLights_Patch(void)
 {
     // Original
-    asm("ADDS R4, #1");
+    //asm("ADDS R4, #1");
 
     asm("MOV R0, R8");
     asm("BL SearchLights_Inject");
