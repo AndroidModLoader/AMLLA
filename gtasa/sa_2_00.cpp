@@ -1,6 +1,6 @@
 #include "la_gtasa.h"
 
-#define ADJUSTED_POOL_LIMIT(__var) (int)(1 * __var)
+#define ADJUSTED_POOL_LIMIT(__var) (int)(2 * __var)
 #define SIZEOF_CARGEN 32
 
 // HOOKS DECLARATION
