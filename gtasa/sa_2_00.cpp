@@ -61,9 +61,9 @@ DECL_HOOKv(ColStoreInit)
 
 #include "sa_2_00/coronas.inl"
 #include "sa_2_00/searchlights.inl"
+#include "sa_2_00/weapons.inl"
 
 // GENERIC FUNCTIONS
-static void* __return_0(...) { return NULL; }
 static void PatchPools()
 {
     // Quad nodes
@@ -164,4 +164,7 @@ void GTASA_2_00::GameLoaded()
 
     // Scripts
     PatchScripts();
+
+    // Weapons
+    PatchWeapons();
 }
