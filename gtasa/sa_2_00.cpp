@@ -21,7 +21,7 @@ DECL_HOOKv(PoolsInit)
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools14ms_pObjectPoolE")) = 
         AllocatePool(cfg->GetInt("Objects", ADJUSTED_POOL_LIMIT(350), "PoolLimits"), 420);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools13ms_pDummyPoolE")) = 
-        AllocatePool(cfg->GetInt("Dummys", ADJUSTED_POOL_LIMIT(2500), "PoolLimits"), 0x3C);
+        AllocatePool(cfg->GetInt("Dummies", ADJUSTED_POOL_LIMIT(2500), "PoolLimits"), 0x3C);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools16ms_pColModelPoolE")) = 
         AllocatePool(cfg->GetInt("ColModel", ADJUSTED_POOL_LIMIT(10150), "PoolLimits"), 48);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools12ms_pTaskPoolE")) = 
@@ -59,18 +59,88 @@ DECL_HOOKv(ColStoreInit)
     ColStoreInit();
 }
 
-int PickUpsCount, PickUpsAlloced;
-uintptr_t PickUpsInit_BackTo;
-__attribute__((optnone)) __attribute__((naked)) void PickUpsInit_Patch(void)
+char* aNewCoronas;
+int coronasCount, coronasStruct;
+DECL_HOOKv(CoronasInit)
 {
-    // Original
-    asm("ADDS R3, #0x20");
-    asm("STRH.W R12, [R2,#0x1A]");
+    CoronasInit();
+    for(int i = 64 * 0x3C; i < coronasStruct; i += 0x3C)
+    {
+        *(int*)(aNewCoronas + i + 12) = 0;
+    }
+}
 
-    asm("PUSH {R0}");
-    asm volatile("CMP R3, %0\n" :: "r"(PickUpsAlloced));
-    asm volatile("MOV R4, %0\n" :: "r"(PickUpsInit_BackTo));
-    asm("POP {R0}\nBX R4");
+uintptr_t Coronas_Update_Continue, Coronas_Update_Break;
+extern "C" uintptr_t Coronas_Update_Inject(int val)
+{
+    return val == coronasStruct ? Coronas_Update_Break : Coronas_Update_Continue;
+}
+__attribute__((optnone)) __attribute__((naked)) void Coronas_Update_Patch(void)
+{
+    asm("MOV R0, R4");
+    asm("BL Coronas_Update_Inject");
+    asm("BX R0");
+}
+
+uintptr_t Coronas_Render_Continue, Coronas_Render_Break;
+extern "C" uintptr_t Coronas_Render_Inject(int val)
+{
+    return val == coronasCount ? Coronas_Render_Break : Coronas_Render_Continue;
+}
+__attribute__((optnone)) __attribute__((naked)) void Coronas_Render_Patch(void)
+{
+    asm("ADD.W R10, R10, #1");
+    asm("MOV R0, R10");
+    asm("BL Coronas_Render_Inject");
+    asm("BX R0");
+}
+
+uintptr_t Coronas_RenderReflections_Continue, Coronas_RenderReflections_Break;
+extern "C" uintptr_t Coronas_RenderReflections_Inject(int val)
+{
+    return val == coronasStruct ? Coronas_RenderReflections_Break : Coronas_RenderReflections_Continue;
+}
+__attribute__((optnone)) __attribute__((naked)) void Coronas_RenderReflections_Patch(void)
+{
+    asm("MOV R0, R8");
+    asm("BL Coronas_RenderReflections_Inject");
+    asm("BX R0");
+}
+
+uintptr_t Coronas_Register1_Continue, Coronas_Register1_Equal, Coronas_Register1_Break;
+extern "C" uintptr_t Coronas_Register1_Inject(int val)
+{
+    if(val < coronasCount) return Coronas_Register1_Continue;
+    if(val == coronasCount) return Coronas_Register1_Equal;
+    return Coronas_Register1_Break;
+}
+__attribute__((optnone)) __attribute__((naked)) void Coronas_Register1_Patch(void)
+{
+    asm("UXTH.W R3, LR");
+    asm("PUSH {R0-R2}");
+    asm("MOV R0, R3");
+    asm("BL Coronas_Register1_Inject");
+    asm("MOV R12, R0");
+    asm("POP {R0-R2}");
+    asm("BX R12");
+}
+
+uintptr_t Coronas_Register2_Continue, Coronas_Register2_Equal, Coronas_Register2_Break;
+extern "C" uintptr_t Coronas_Register2_Inject(int val)
+{
+    if(val < coronasCount) return Coronas_Register2_Continue;
+    if(val == coronasCount) return Coronas_Register2_Equal;
+    return Coronas_Register2_Break;
+}
+__attribute__((optnone)) __attribute__((naked)) void Coronas_Register2_Patch(void)
+{
+    asm("UXTH.W R6, LR");
+    asm("PUSH {R0-R2}");
+    asm("MOV R0, R6");
+    asm("BL Coronas_Register2_Inject");
+    asm("MOV R12, R0");
+    asm("POP {R0-R2}");
+    asm("BX R12");
 }
 
 // GENERIC FUNCTIONS
@@ -86,6 +156,79 @@ static void PatchPools()
     // COLStore
     HOOKB(ColStoreInit, pGameAddr + 0x2D973E + 0x1);
 
+    // EntityIPL limit
+    if(*(uint32_t*)(pGameAddr + 0x28208C) == 0x0045DD2E)
+    {
+        static void** entityIplPool; // default is 40
+
+        int entitiesIpl = cfg->GetInt("EntityIPL", ADJUSTED_POOL_LIMIT(40), "PoolLimits");
+        entityIplPool = new void*[entitiesIpl] {0};
+
+        // IplEntityIndexArrays
+        aml->WriteAddr(pGameAddr + 0x2805E0, (uintptr_t)entityIplPool - pGameAddr - 0x280578);
+        aml->WriteAddr(pGameAddr + 0x280C78, (uintptr_t)entityIplPool - pGameAddr - 0x2809F0);
+        aml->WriteAddr(pGameAddr + 0x281080, (uintptr_t)entityIplPool - pGameAddr - 0x280CEA);
+        aml->WriteAddr(pGameAddr + 0x2810C8, (uintptr_t)entityIplPool - pGameAddr - 0x2810C2);
+        aml->WriteAddr(pGameAddr + 0x28208C, (uintptr_t)entityIplPool - pGameAddr - 0x28207A);
+    }
+
+    // EntityPerIPL limit
+    if(*(uint32_t*)(pGameAddr + 0x4692D0) == 0x005451B0)
+    {
+        static void** entityPerIplPool; // default is 4096
+
+        int entitiesPerIpl = cfg->GetInt("EntityPerIPL", ADJUSTED_POOL_LIMIT(4096), "PoolLimits");
+        entityPerIplPool = new void*[entitiesPerIpl] {0};
+        
+        // gCurrIplInstances / gpLoadedBuildings (v2.10, original name)
+        aml->WriteAddr(pGameAddr + 0x4692D0, (uintptr_t)entityPerIplPool - pGameAddr - 0x4690D0);
+        aml->WriteAddr(pGameAddr + 0x4692D4, (uintptr_t)entityPerIplPool - pGameAddr - 0x4690E2);
+        aml->WriteAddr(pGameAddr + 0x4692D8, (uintptr_t)entityPerIplPool - pGameAddr - 0x4692A8);
+        aml->WriteAddr(pGameAddr + 0x4692DC, (uintptr_t)entityPerIplPool - pGameAddr - 0x4690EE);
+        aml->WriteAddr(pGameAddr + 0x4692E0, (uintptr_t)entityPerIplPool - pGameAddr - 0x469106);
+        aml->WriteAddr(pGameAddr + 0x4692E8, (uintptr_t)entityPerIplPool - pGameAddr - 0x46912A);
+        aml->WriteAddr(pGameAddr + 0x4692EC, (uintptr_t)entityPerIplPool - pGameAddr - 0x46912C);
+        aml->WriteAddr(pGameAddr + 0x469304, (uintptr_t)entityPerIplPool - pGameAddr - 0x469250);
+        aml->WriteAddr(pGameAddr + 0x46930C, (uintptr_t)entityPerIplPool - pGameAddr - 0x469266);
+        aml->WriteAddr(pGameAddr + 0x46931C, (uintptr_t)entityPerIplPool - pGameAddr - 0x468D6A);
+        aml->WriteAddr(pGameAddr + 0x469330, (uintptr_t)entityPerIplPool - pGameAddr - 0x4691A2);
+        aml->WriteAddr(pGameAddr + 0x469334, (uintptr_t)entityPerIplPool - pGameAddr - 0x46919A);
+    }
+
+    // Coronas
+    if(*(uint32_t*)(pGameAddr + 0x676C44) == 0x00A25B44)
+    {
+        coronasCount = cfg->GetInt("Coronas", ADJUSTED_POOL_LIMIT(4 * 64), "PoolLimits"); // doing x4 cuz it's good for mods
+        coronasStruct = coronasCount * 0x3C;
+        aNewCoronas = new char[coronasStruct] {0};
+        aml->WriteAddr(pGameAddr + 0x676C44, (uintptr_t)&aNewCoronas);
+
+        // Init
+        HOOKBLX(CoronasInit, pGameAddr + 0x472FD8 + 0x1);
+        // Update
+        Coronas_Update_Continue = pGameAddr + 0x5A2304 + 0x1;
+        Coronas_Update_Break =    pGameAddr + 0x5A231A + 0x1;
+        aml->Redirect(pGameAddr + 0x5A2314 + 0x1, (uintptr_t)Coronas_Update_Patch);
+        // Render
+        Coronas_Render_Continue = pGameAddr + 0x5A24E2 + 0x1;
+        Coronas_Render_Break =    pGameAddr + 0x5A2B0E + 0x1;
+        aml->Redirect(pGameAddr + 0x5A2B02 + 0x1, (uintptr_t)Coronas_Render_Patch);
+        // RenderReflections
+        Coronas_RenderReflections_Continue = pGameAddr + 0x5A2CB2 + 0x1;
+        Coronas_RenderReflections_Break =    pGameAddr + 0x5A2F2C + 0x1;
+        aml->Redirect(pGameAddr + 0x5A2F24 + 0x1, (uintptr_t)Coronas_RenderReflections_Patch);
+        // RegisterCorona1
+        Coronas_Register1_Continue = pGameAddr + 0x5A3B44 + 0x1;
+        Coronas_Register1_Equal =    pGameAddr + 0x5A3B60 + 0x1;
+        Coronas_Register1_Break =    pGameAddr + 0x5A3B90 + 0x1;
+        aml->Redirect(pGameAddr + 0x5A3B56 + 0x1, (uintptr_t)Coronas_Register1_Patch);
+        // RegisterCorona2
+        Coronas_Register2_Continue = pGameAddr + 0x5A3B76 + 0x1;
+        Coronas_Register2_Equal =    pGameAddr + 0x5A3CE0 + 0x1;
+        Coronas_Register2_Break =    pGameAddr + 0x5A3BC8 + 0x1;
+        aml->Redirect(pGameAddr + 0x5A3B82 + 0x1, (uintptr_t)Coronas_Register2_Patch);
+    }
+
     // EntryExits
     //aml->PlaceB(pGameAddr + 0x304A1C + 0x1, pGameAddr + 0x304A8C + 0x1);
     //aml->PlaceNOP(pGameAddr + 0x304A8E + 0x1, 3);
@@ -93,65 +236,16 @@ static void PatchPools()
     // Stunt jumps
     //aml->PlaceB(pGameAddr + 0x361514 + 0x1, pGameAddr + 0x361574 + 0x1);
     //aml->PlaceNOP(pGameAddr + 0x361584 + 0x1, 1);
-
-    // EntityIPL limit
-    if(*(uint32_t*)(pGameAddr + 0x28208C) == 0x0045DD2E)
-    {
-        static int* entityIplPool; // default is 40
-
-        int entitiesIpl = cfg->GetInt("EntityIPL", ADJUSTED_POOL_LIMIT(40), "PoolLimits");
-        entityIplPool = new int[entitiesIpl] {0};
-
-        aml->WriteAddr(pGameAddr + 0x2805E0, (uintptr_t)&entityIplPool - pGameAddr - 0x280578);
-        aml->WriteAddr(pGameAddr + 0x280C78, (uintptr_t)&entityIplPool - pGameAddr - 0x2809F0);
-        aml->WriteAddr(pGameAddr + 0x281080, (uintptr_t)&entityIplPool - pGameAddr - 0x280CEA);
-        aml->WriteAddr(pGameAddr + 0x2810C8, (uintptr_t)&entityIplPool - pGameAddr - 0x2810C2);
-        aml->WriteAddr(pGameAddr + 0x28208C, (uintptr_t)&entityIplPool - pGameAddr - 0x28207A);
-    }
-
-    // EntityPerIPL limit
-    if(*(uint32_t*)(pGameAddr + 0x4692D0) == 0x005451B0)
-    {
-        static int* entityPerIplPool; // default is 4096
-
-        int entitiesPerIpl = cfg->GetInt("EntityPerIPL", ADJUSTED_POOL_LIMIT(4096), "PoolLimits");
-        entityPerIplPool = new int[entitiesPerIpl] {0};
-        
-        aml->WriteAddr(pGameAddr + 0x4692D0, (uintptr_t)&entityPerIplPool - pGameAddr - 0x4690D0);
-        aml->WriteAddr(pGameAddr + 0x4692D4, (uintptr_t)&entityPerIplPool - pGameAddr - 0x4690E2);
-        aml->WriteAddr(pGameAddr + 0x4692D8, (uintptr_t)&entityPerIplPool - pGameAddr - 0x4692A8);
-        aml->WriteAddr(pGameAddr + 0x4692DC, (uintptr_t)&entityPerIplPool - pGameAddr - 0x4690EE);
-        aml->WriteAddr(pGameAddr + 0x4692E0, (uintptr_t)&entityPerIplPool - pGameAddr - 0x469106);
-        aml->WriteAddr(pGameAddr + 0x4692E8, (uintptr_t)&entityPerIplPool - pGameAddr - 0x46912A);
-        aml->WriteAddr(pGameAddr + 0x4692EC, (uintptr_t)&entityPerIplPool - pGameAddr - 0x46912C);
-        aml->WriteAddr(pGameAddr + 0x469304, (uintptr_t)&entityPerIplPool - pGameAddr - 0x469250);
-        aml->WriteAddr(pGameAddr + 0x46930C, (uintptr_t)&entityPerIplPool - pGameAddr - 0x469266);
-        aml->WriteAddr(pGameAddr + 0x46931C, (uintptr_t)&entityPerIplPool - pGameAddr - 0x468D6A);
-        aml->WriteAddr(pGameAddr + 0x469330, (uintptr_t)&entityPerIplPool - pGameAddr - 0x4691A2);
-        aml->WriteAddr(pGameAddr + 0x469334, (uintptr_t)&entityPerIplPool - pGameAddr - 0x46919A);
-    }
     
     // Other pools
     HOOKPLT(PoolsInit, pGameAddr + 0x672468);
-}
-
-void PatchPickUpsPools()
-{
-    PickUpsCount = cfg->GetInt("PickUps", 620, "PoolLimits");
-    PickUpsAlloced = 0x20 * PickUpsCount;
-    void* pickupsPool = new char[PickUpsAlloced] {0};
-    aml->Unprot(pGameAddr + 0x678BF8, sizeof(void*));
-    *(void**)(pGameAddr + 0x678BF8) = pickupsPool;
-
-    PickUpsInit_BackTo = pGameAddr + 0x31CFA2 + 0x1;
-    aml->Redirect(pGameAddr + 0x31CF98 + 0x1, (uintptr_t)PickUpsInit_Patch);
 }
 
 // Matrices
 void* (*InitMatrixLinkList)(uintptr_t, int);
 DECL_HOOKv(InitMatrixArray)
 {
-    InitMatrixLinkList(aml->GetSym(hGameHndl, "gMatrixList"), cfg->GetInt("MatrixCount", 900, "Matrices"));
+    InitMatrixLinkList(aml->GetSym(hGameHndl, "gMatrixList"), cfg->GetInt("MatrixCount", ADJUSTED_POOL_LIMIT(900), "Matrices"));
 }
 
 // Scripts
@@ -175,7 +269,7 @@ __attribute__((optnone)) __attribute__((naked)) void SearchLights_Patch(void)
 }
 void PatchScripts()
 {
-    int SearchLightsCount = cfg->GetInt("SearchLights", 8, "Scripts"); PatchSearchLightsCount = 992 * SearchLightsCount;
+    int SearchLightsCount = cfg->GetInt("SearchLights", ADJUSTED_POOL_LIMIT(8), "Scripts"); PatchSearchLightsCount = 992 * SearchLightsCount;
     ScriptSearchLights = new char[SearchLightsCount * 0x7C] {0};
     aml->WriteAddr(pGameAddr + 0x6797B4, &ScriptSearchLights);
     SearchLights_BackTo1 = pGameAddr + 0x358908 + 0x1;
@@ -198,7 +292,6 @@ void GTASA_2_00::GameLoaded()
 {
     // Pools
     PatchPools();
-    //PatchPickUpsPools();
 
     // Matrices
     HOOKBLX(InitMatrixArray, pGameAddr + 0x471D1A + 0x1);

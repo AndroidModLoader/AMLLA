@@ -40,7 +40,7 @@ bool RegisterLAModule(ILAModule* module)
 /////////////////////////////////////////////////////////////////////////////
 extern "C" void OnModPreLoad()
 {
-    logger->SetTag("LimitAdjuster");
+    logger->SetTag("AMLLA - LimitAdjuster");
     
     ILAModule* pWorkingModule;
     int count = aModules.size();
