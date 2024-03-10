@@ -143,6 +143,39 @@ __attribute__((optnone)) __attribute__((naked)) void Coronas_Register2_Patch(voi
     asm("BX R12");
 }
 
+uintptr_t Coronas_UpdateCoors_Continue, Coronas_UpdateCoors_Equal, Coronas_UpdateCoors_Break;
+extern "C" uintptr_t Coronas_UpdateCoors_Inject(int val)
+{
+    if(val < coronasCount) return Coronas_UpdateCoors_Continue;
+    if(val == coronasCount) return Coronas_UpdateCoors_Equal;
+    return Coronas_UpdateCoors_Break;
+}
+__attribute__((optnone)) __attribute__((naked)) void Coronas_UpdateCoors_Patch(void)
+{
+    asm("MOV R0, R12");
+    asm("BL Coronas_UpdateCoors_Inject");
+    asm("BX R0");
+}
+
+uintptr_t Coronas_Entity_Continue, Coronas_Entity_Equal, Coronas_Entity_Break;
+extern "C" uintptr_t Coronas_Entity_Inject(int val)
+{
+    if(val < coronasCount) return Coronas_Entity_Continue;
+    if(val == coronasCount) return Coronas_Entity_Equal;
+    return Coronas_Entity_Break;
+}
+__attribute__((optnone)) __attribute__((naked)) void Coronas_Entity_Patch(void)
+{
+    asm("UXTH R1, R0");
+    asm("MOV R12, R1");
+    asm("PUSH {R0-R3}");
+    asm("MOV R0, R12");
+    asm("BL Coronas_Entity_Inject");
+    asm("MOV R12, R0");
+    asm("POP {R0-R3}");
+    asm("BX R12");
+}
+
 // GENERIC FUNCTIONS
 static void* __return_0(...) { return NULL; }
 static void PatchPools()
@@ -227,6 +260,16 @@ static void PatchPools()
         Coronas_Register2_Equal =    pGameAddr + 0x5A3CE0 + 0x1;
         Coronas_Register2_Break =    pGameAddr + 0x5A3BC8 + 0x1;
         aml->Redirect(pGameAddr + 0x5A3B82 + 0x1, (uintptr_t)Coronas_Register2_Patch);
+        // UpdateCoors
+        Coronas_UpdateCoors_Continue = pGameAddr + 0x5A3D82 + 0x1;
+        Coronas_UpdateCoors_Equal =    pGameAddr + 0x5A3D9C + 0x1;
+        Coronas_UpdateCoors_Break =    pGameAddr + 0x5A3DA2 + 0x1;
+        aml->Redirect(pGameAddr + 0x5A3D94 + 0x1, (uintptr_t)Coronas_UpdateCoors_Patch);
+        // ProcessLightsForEntity
+        Coronas_Entity_Continue = pGameAddr + 0x5A4C92 + 0x1;
+        Coronas_Entity_Equal =    pGameAddr + 0x5A4CC0 + 0x1;
+        Coronas_Entity_Break =    pGameAddr + 0x5A4CA6 + 0x1;
+        aml->Redirect(pGameAddr + 0x5A4C9C + 0x1, (uintptr_t)Coronas_Entity_Patch);
     }
 
     // EntryExits
@@ -298,5 +341,5 @@ void GTASA_2_00::GameLoaded()
     SET_TO(InitMatrixLinkList, aml->GetSym(hGameHndl, "_ZN15CMatrixLinkList4InitEi"));
 
     // Scripts
-    PatchScripts();
+    //PatchScripts();
 }
