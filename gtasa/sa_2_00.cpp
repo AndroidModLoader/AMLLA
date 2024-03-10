@@ -60,6 +60,7 @@ DECL_HOOKv(ColStoreInit)
 }
 
 #include "sa_2_00/coronas.inl"
+#include "sa_2_00/searchlights.inl"
 
 // GENERIC FUNCTIONS
 static void* __return_0(...) { return NULL; }
@@ -136,32 +137,9 @@ DECL_HOOKv(InitMatrixArray)
 }
 
 // Scripts
-char* ScriptSearchLights;
-int PatchSearchLightsCount;
-uintptr_t SearchLights_BackTo1, SearchLights_BackTo2;
-extern "C" uintptr_t SearchLights_Inject(int val)
-{
-    if(val == PatchSearchLightsCount) return SearchLights_BackTo1;
-    return SearchLights_BackTo2;
-}
-__attribute__((optnone)) __attribute__((naked)) void SearchLights_Patch(void)
-{
-    // Original
-    //asm("ADDS R4, #1");
-
-    asm("MOV R0, R8");
-    asm("BL SearchLights_Inject");
-
-    asm("BX R0");
-}
 void PatchScripts()
 {
-    int SearchLightsCount = cfg->GetInt("SearchLights", ADJUSTED_POOL_LIMIT(8), "Scripts"); PatchSearchLightsCount = 992 * SearchLightsCount;
-    ScriptSearchLights = new char[SearchLightsCount * 0x7C] {0};
-    aml->WriteAddr(pGameAddr + 0x6797B4, &ScriptSearchLights);
-    SearchLights_BackTo1 = pGameAddr + 0x358908 + 0x1;
-    SearchLights_BackTo2 = pGameAddr + 0x358812 + 0x1;
-    aml->Redirect(pGameAddr + 0x358900 + 0x1, (uintptr_t)SearchLights_Patch);
+    PatchSearchlights();
 }
 
 // CLASS DESCRIPTION
@@ -185,5 +163,5 @@ void GTASA_2_00::GameLoaded()
     SET_TO(InitMatrixLinkList, aml->GetSym(hGameHndl, "_ZN15CMatrixLinkList4InitEi"));
 
     // Scripts
-    //PatchScripts();
+    PatchScripts();
 }
