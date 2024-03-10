@@ -1,13 +1,11 @@
 #include "la_gtasa.h"
 
-#define ADJUSTED_POOL_LIMIT(__var) (int)(1 * __var)
+#define ADJUSTED_POOL_LIMIT(__var) (int)(2 * __var)
 #define SIZEOF_CARGEN 32
 
 // HOOKS DECLARATION
 DECL_HOOKv(PoolsInit)
 {
-    CSAPool* tmpPool;
-
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools25ms_pPtrNodeSingleLinkPoolE")) = 
         AllocatePool(cfg->GetInt("PtrNodeSingle", ADJUSTED_POOL_LIMIT(70000), "PoolLimits"), 0x8);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools25ms_pPtrNodeDoubleLinkPoolE")) = 
@@ -42,18 +40,23 @@ DECL_HOOKv(PoolsInit)
         AllocatePool(cfg->GetInt("PedIntelligence", ADJUSTED_POOL_LIMIT(140), "PoolLimits"), 664);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools20ms_pPedAttractorPoolE")) = 
         AllocatePool(cfg->GetInt("PedAttractors", ADJUSTED_POOL_LIMIT(64), "PoolLimits"), 236);
-        
-    *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN9CColStore11ms_pColPoolE")) = 
-        AllocatePool(cfg->GetInt("Collisions", ADJUSTED_POOL_LIMIT(255), "PoolLimits"), 0x2C);
-    *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN17CEntryExitManager17mp_poolEntryExitsE")) = 
-        (tmpPool=AllocatePool(cfg->GetInt("EntryExits", ADJUSTED_POOL_LIMIT(455), "PoolLimits"), 0x3C));
-        ((char*)tmpPool)[17] = 1; // m_bIsLocked = true
-    *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN9CIplStore8ms_pPoolE")) = 
-        AllocatePool(cfg->GetInt("IplStore", ADJUSTED_POOL_LIMIT(256), "PoolLimits"), 0x34);
-    *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN13CQuadTreeNode20ms_pQuadTreeNodePoolE")) = 
-        AllocatePool(cfg->GetInt("QuadTreeNodes", ADJUSTED_POOL_LIMIT(400), "PoolLimits"), 0x28);
-    *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN17CStuntJumpManager17mp_poolStuntJumpsE")) = 
-        AllocatePool(cfg->GetInt("StuntJumps", ADJUSTED_POOL_LIMIT(256), "PoolLimits"), 0x44);
+}
+DECL_HOOKv(InitQuadTreePool)
+{
+    auto& pool = *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN13CQuadTreeNode20ms_pQuadTreeNodePoolE"));
+    if(!pool) pool = AllocatePool(cfg->GetInt("QuadTreeNodes", ADJUSTED_POOL_LIMIT(400), "PoolLimits"), 0x28);
+}
+DECL_HOOKv(IplStoreInit)
+{
+    auto& pool = *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN9CIplStore8ms_pPoolE"));
+    if(!pool) pool = AllocatePool(cfg->GetInt("IplStore", ADJUSTED_POOL_LIMIT(256), "PoolLimits"), 0x34);
+    IplStoreInit();
+}
+DECL_HOOKv(ColStoreInit)
+{
+    auto& pool = *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN9CColStore11ms_pColPoolE"));
+    if(!pool) pool = AllocatePool(cfg->GetInt("Collisions", ADJUSTED_POOL_LIMIT(255), "PoolLimits"), 0x2C);
+    ColStoreInit();
 }
 
 int PickUpsCount, PickUpsAlloced;
@@ -75,13 +78,61 @@ static void* __return_0(...) { return NULL; }
 static void PatchPools()
 {
     // Quad nodes
-    aml->Redirect(aml->GetSym(hGameHndl, "_ZN13CQuadTreeNode8InitPoolEv"), (uintptr_t)__return_0);
+    HOOKBLX(InitQuadTreePool, pGameAddr + 0x471D82 + 0x1);
+
+    // IPLStore
+    HOOKB(IplStoreInit, pGameAddr + 0x422E46 + 0x1);
+
+    // COLStore
+    HOOKB(ColStoreInit, pGameAddr + 0x2D973E + 0x1);
+
     // EntryExits
     //aml->PlaceB(pGameAddr + 0x304A1C + 0x1, pGameAddr + 0x304A8C + 0x1);
     //aml->PlaceNOP(pGameAddr + 0x304A8E + 0x1, 3);
+
     // Stunt jumps
-    aml->PlaceB(pGameAddr + 0x361514 + 0x1, pGameAddr + 0x361574 + 0x1);
-    aml->PlaceNOP(pGameAddr + 0x361584 + 0x1, 1);
+    //aml->PlaceB(pGameAddr + 0x361514 + 0x1, pGameAddr + 0x361574 + 0x1);
+    //aml->PlaceNOP(pGameAddr + 0x361584 + 0x1, 1);
+
+    // EntityIPL limit
+    if(*(uint32_t*)(pGameAddr + 0x28208C) == 0x0045DD2E)
+    {
+        static int* entityIplPool; // default is 40
+
+        int entitiesIpl = cfg->GetInt("EntityIPL", ADJUSTED_POOL_LIMIT(40), "PoolLimits");
+        entityIplPool = new int[entitiesIpl] {0};
+
+        aml->WriteAddr(pGameAddr + 0x2805E0, (uintptr_t)&entityIplPool - pGameAddr - 0x280578);
+        aml->WriteAddr(pGameAddr + 0x280C78, (uintptr_t)&entityIplPool - pGameAddr - 0x2809F0);
+        aml->WriteAddr(pGameAddr + 0x281080, (uintptr_t)&entityIplPool - pGameAddr - 0x280CEA);
+        aml->WriteAddr(pGameAddr + 0x2810C8, (uintptr_t)&entityIplPool - pGameAddr - 0x2810C2);
+        aml->WriteAddr(pGameAddr + 0x28208C, (uintptr_t)&entityIplPool - pGameAddr - 0x28207A);
+    }
+
+    // EntityPerIPL limit
+    if(*(uint32_t*)(pGameAddr + 0x4692D0) == 0x005451B0)
+    {
+        static int* entityPerIplPool; // default is 4096
+
+        int entitiesPerIpl = cfg->GetInt("EntityPerIPL", ADJUSTED_POOL_LIMIT(4096), "PoolLimits");
+        entityPerIplPool = new int[entitiesPerIpl] {0};
+        
+        aml->WriteAddr(pGameAddr + 0x4692D0, (uintptr_t)&entityPerIplPool - pGameAddr - 0x4690D0);
+        aml->WriteAddr(pGameAddr + 0x4692D4, (uintptr_t)&entityPerIplPool - pGameAddr - 0x4690E2);
+        aml->WriteAddr(pGameAddr + 0x4692D8, (uintptr_t)&entityPerIplPool - pGameAddr - 0x4692A8);
+        aml->WriteAddr(pGameAddr + 0x4692DC, (uintptr_t)&entityPerIplPool - pGameAddr - 0x4690EE);
+        aml->WriteAddr(pGameAddr + 0x4692E0, (uintptr_t)&entityPerIplPool - pGameAddr - 0x469106);
+        aml->WriteAddr(pGameAddr + 0x4692E8, (uintptr_t)&entityPerIplPool - pGameAddr - 0x46912A);
+        aml->WriteAddr(pGameAddr + 0x4692EC, (uintptr_t)&entityPerIplPool - pGameAddr - 0x46912C);
+        aml->WriteAddr(pGameAddr + 0x469304, (uintptr_t)&entityPerIplPool - pGameAddr - 0x469250);
+        aml->WriteAddr(pGameAddr + 0x46930C, (uintptr_t)&entityPerIplPool - pGameAddr - 0x469266);
+        aml->WriteAddr(pGameAddr + 0x46931C, (uintptr_t)&entityPerIplPool - pGameAddr - 0x468D6A);
+        aml->WriteAddr(pGameAddr + 0x469330, (uintptr_t)&entityPerIplPool - pGameAddr - 0x4691A2);
+        aml->WriteAddr(pGameAddr + 0x469334, (uintptr_t)&entityPerIplPool - pGameAddr - 0x46919A);
+    }
+    
+    // Other pools
+    HOOKPLT(PoolsInit, pGameAddr + 0x672468);
 }
 
 void PatchPickUpsPools()
@@ -126,8 +177,7 @@ void PatchScripts()
 {
     int SearchLightsCount = cfg->GetInt("SearchLights", 8, "Scripts"); PatchSearchLightsCount = 992 * SearchLightsCount;
     ScriptSearchLights = new char[SearchLightsCount * 0x7C] {0};
-    char** ScriptSearchLights_ptr = &ScriptSearchLights;
-    aml->Write(pGameAddr + 0x6797B4, (uintptr_t)ScriptSearchLights_ptr, sizeof(void*));
+    aml->WriteAddr(pGameAddr + 0x6797B4, &ScriptSearchLights);
     SearchLights_BackTo1 = pGameAddr + 0x358908 + 0x1;
     SearchLights_BackTo2 = pGameAddr + 0x358812 + 0x1;
     aml->Redirect(pGameAddr + 0x358900 + 0x1, (uintptr_t)SearchLights_Patch);
@@ -149,10 +199,9 @@ void GTASA_2_00::GameLoaded()
     // Pools
     PatchPools();
     //PatchPickUpsPools();
-    HOOKPLT(PoolsInit, pGameAddr + 0x672468);
 
     // Matrices
-    HOOK(InitMatrixArray, aml->GetSym(hGameHndl, "_ZN10CPlaceable15InitMatrixArrayEv"));
+    HOOKBLX(InitMatrixArray, pGameAddr + 0x471D1A + 0x1);
     SET_TO(InitMatrixLinkList, aml->GetSym(hGameHndl, "_ZN15CMatrixLinkList4InitEi"));
 
     // Scripts
