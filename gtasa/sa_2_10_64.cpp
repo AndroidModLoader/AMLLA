@@ -6,10 +6,10 @@ class GTASA_2_10 : public GTASA
 public:
     bool IsTheLoadedGameCorrect()
     {
-        return (*(uint32_t*)(pGameAddr + 0x202020) == 0x61766E49);
+        return (*(uint32_t*)(pGameAddr + 0x200000) == 0x00841928);
     }
     bool Is64Bit()
     {
-        return false;
+        return true;
     }
-} GTASA_2_10_32_Module;
+} GTASA_2_10_64_Module;

@@ -175,6 +175,10 @@ public:
     {
         return (*(uint32_t*)(pGameAddr + 0x202020) == 0xE8BDB001);
     }
+    bool Is64Bit()
+    {
+        return false;
+    }
     void GameLoaded();
 } GTASA_2_00_Module;
 

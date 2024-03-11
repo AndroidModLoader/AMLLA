@@ -33,4 +33,5 @@ public:
     virtual void GamePreloaded() {}
     virtual void GameLoaded() {}
     virtual void GameModsLoaded() {}
+    virtual bool Is64Bit() = 0; // 32 otherwise
 };

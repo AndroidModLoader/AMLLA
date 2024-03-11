@@ -50,7 +50,11 @@ extern "C" void OnModPreLoad()
         if(pWorkingModule)
         {
             pGameAddr = aml->GetLib(pWorkingModule->GetLibName());
-            if(pGameAddr != 0 && pWorkingModule->IsTheLoadedGameCorrect())
+          #ifdef AML32
+            if(pGameAddr != 0 && !pWorkingModule->Is64Bit() && pWorkingModule->IsTheLoadedGameCorrect())
+          #else //              ^^^
+            if(pGameAddr != 0 && pWorkingModule->Is64Bit() && pWorkingModule->IsTheLoadedGameCorrect())
+          #endif
             {
                 cfg = new Config(pWorkingModule->GetConfigName());
                 hGameHndl = aml->GetLibHandle(pWorkingModule->GetLibName());
