@@ -65,6 +65,14 @@ DECL_HOOKv(EntryExitManInit)
     pool = AllocatePool(cfg->GetInt("EntryExits", ADJUSTED_POOL_LIMIT(455), "PoolLimits"), 0x3C);
     pool->locked = true;
 }
+DECL_HOOKv(StuntJumpsInit)
+{
+    // StuntJumpsInit(); // reversed
+
+    auto& pool = *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN17CStuntJumpManager17mp_poolStuntJumpsE"));
+    pool = AllocatePool(cfg->GetInt("StuntJumps", ADJUSTED_POOL_LIMIT(256), "PoolLimits"), 0x44);
+    aml->Write8(pGameAddr + 0x820000, 0x01); // CStuntJumpManager::m_bActive
+}
 
 #include "sa_2_00/coronas.inl"
 #include "sa_2_00/searchlights.inl"
@@ -86,6 +94,9 @@ static void PatchPools()
     // EntryExits
     HOOKBLX(EntryExitManInit, pGameAddr + 0x471DC0 + 0x1);
     aml->PlaceB(pGameAddr + 0x304A1C + 0x1, pGameAddr + 0x304A90 + 0x1);
+
+    // Stunt jumps
+    HOOKBLX(StuntJumpsInit, pGameAddr + 0x471DC4 + 0x1);
 
     // EntityIPL limit
     if(*(uint32_t*)(pGameAddr + 0x28208C) == 0x0045DD2E)
@@ -128,14 +139,6 @@ static void PatchPools()
 
     // Coronas
     PatchCoronas();
-
-    // EntryExits
-    //aml->PlaceB(pGameAddr + 0x304A1C + 0x1, pGameAddr + 0x304A8C + 0x1);
-    //aml->PlaceNOP(pGameAddr + 0x304A8E + 0x1, 3);
-
-    // Stunt jumps
-    //aml->PlaceB(pGameAddr + 0x361514 + 0x1, pGameAddr + 0x361574 + 0x1);
-    //aml->PlaceNOP(pGameAddr + 0x361584 + 0x1, 1);
     
     // Other pools
     HOOKPLT(PoolsInit, pGameAddr + 0x672468);
