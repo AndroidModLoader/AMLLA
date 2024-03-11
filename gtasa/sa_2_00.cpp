@@ -195,7 +195,7 @@ void GTASA_2_00::GameLoaded()
     PatchScripts();
 
     // Weapons
-    PatchWeapons();
+    //PatchWeapons();
 
     // Entity pointers
     PatchEntityPointers();
