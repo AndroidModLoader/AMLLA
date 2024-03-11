@@ -62,6 +62,7 @@ DECL_HOOKv(ColStoreInit)
 #include "sa_2_00/coronas.inl"
 #include "sa_2_00/searchlights.inl"
 #include "sa_2_00/weapons.inl"
+#include "sa_2_00/entities.inl"
 
 // GENERIC FUNCTIONS
 static void PatchPools()
@@ -142,6 +143,16 @@ void PatchScripts()
     PatchSearchlights();
 }
 
+// Misc
+DECL_HOOK(void*, ExtraObjectsDir_New, void* self, int count)
+{
+    return ExtraObjectsDir_New(self, cfg->GetInt("ExtraObjectsDir", ADJUSTED_POOL_LIMIT(550), "Misc"));
+}
+void PatchMisc()
+{
+    HOOKBLX(ExtraObjectsDir_New, pGameAddr + 0x46BCE4 + 0x1);
+}
+
 // CLASS DESCRIPTION
 class GTASA_2_00 : public GTASA
 {
@@ -167,4 +178,10 @@ void GTASA_2_00::GameLoaded()
 
     // Weapons
     PatchWeapons();
+
+    // Entity pointers
+    PatchEntityPointers();
+
+    // Misc
+    PatchMisc();
 }
