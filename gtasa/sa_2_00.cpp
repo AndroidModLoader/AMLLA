@@ -58,6 +58,13 @@ DECL_HOOKv(ColStoreInit)
     if(!pool) pool = AllocatePool(cfg->GetInt("Collisions", ADJUSTED_POOL_LIMIT(255), "PoolLimits"), 0x2C);
     ColStoreInit();
 }
+DECL_HOOKv(EntryExitManInit)
+{
+    EntryExitManInit();
+    auto& pool = *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN17CEntryExitManager17mp_poolEntryExitsE"));
+    pool = AllocatePool(cfg->GetInt("EntryExits", ADJUSTED_POOL_LIMIT(455), "PoolLimits"), 0x3C);
+    pool->locked = true;
+}
 
 #include "sa_2_00/coronas.inl"
 #include "sa_2_00/searchlights.inl"
@@ -75,6 +82,10 @@ static void PatchPools()
 
     // COLStore
     HOOKB(ColStoreInit, pGameAddr + 0x2D973E + 0x1);
+
+    // EntryExits
+    HOOKBLX(EntryExitManInit, pGameAddr + 0x471DC0 + 0x1);
+    aml->PlaceB(pGameAddr + 0x304A1C + 0x1, pGameAddr + 0x304A90 + 0x1);
 
     // EntityIPL limit
     if(*(uint32_t*)(pGameAddr + 0x28208C) == 0x0045DD2E)
