@@ -77,6 +77,7 @@ DECL_HOOKv(StuntJumpsInit)
 #include "sa_2_00/coronas.inl"
 #include "sa_2_00/searchlights.inl"
 #include "sa_2_00/weapons.inl"
+#include "sa_2_00/vehicles.inl"
 #include "sa_2_00/entities.inl"
 
 // GENERIC FUNCTIONS
@@ -196,6 +197,9 @@ void GTASA_2_00::GameLoaded()
 
     // Weapons
     //PatchWeapons();
+
+    // Vehicles
+    PatchVehicles();
 
     // Entity pointers
     PatchEntityPointers();

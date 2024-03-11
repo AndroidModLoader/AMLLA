@@ -3,7 +3,7 @@
 
 #include <vector>
 
-MYMOD(net.rusjj.la, AMLs Limit Adjuster, 0.1, RusJJ)
+MYMOD(net.rusjj.la, AMLs Limit Adjuster, 0.2, RusJJ)
 BEGIN_DEPLIST()
     ADD_DEPENDENCY_VER(net.rusjj.aml, 1.0.2.1)
 END_DEPLIST()
