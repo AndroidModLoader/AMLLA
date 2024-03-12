@@ -1,6 +1,6 @@
 #include "la_gtasa.h"
 
-#define ADJUSTED_POOL_LIMIT(__var) (int)(2 * __var)
+#define ADJUSTED_POOL_LIMIT(__var) (int)(4 * __var)
 #define SIZEOF_CARGEN 32
 
 // HOOKS DECLARATION
@@ -74,6 +74,23 @@ DECL_HOOKv(StuntJumpsInit)
     aml->Write8(pGameAddr + 0x820000, 0x01); // CStuntJumpManager::m_bActive
 }
 
+int fxmempoolsize;
+DECL_HOOKb(FxMemPoolInit, int self)
+{
+    void* data = malloc(fxmempoolsize);
+
+    *(int*)(self + 0) = (int)data;
+    *(int*)(self + 4) = fxmempoolsize;
+    *(int*)(self + 8) = 0;
+
+    if(data)
+    {
+        memset(data, 0, fxmempoolsize);
+        return true;
+    }
+    return false;
+}
+
 #include "sa_2_00/coronas.inl"
 #include "sa_2_00/searchlights.inl"
 #include "sa_2_00/weapons.inl"
@@ -140,6 +157,11 @@ static void PatchPools()
 
     // Coronas
     PatchCoronas();
+
+    // FX Memory Pool
+    // 1 MB on PC, 0.5 MB on Mobile <_<
+    fxmempoolsize = 1024 * cfg->GetInt("FXMemoryPoolKB", ADJUSTED_POOL_LIMIT(2 * 512), "PoolLimits");
+    HOOKBLX(FxMemPoolInit, pGameAddr + 0x36D074 + 0x1);
     
     // Other pools
     HOOKPLT(PoolsInit, pGameAddr + 0x672468);
