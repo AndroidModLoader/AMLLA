@@ -7,9 +7,9 @@
 DECL_HOOKv(PoolsInit)
 {
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools25ms_pPtrNodeSingleLinkPoolE")) = 
-        AllocatePool(cfg->GetInt("PtrNodeSingle", ADJUSTED_POOL_LIMIT(70000), "PoolLimits"), 0x8);
+        AllocatePool(cfg->GetInt("PtrNodeSingle", ADJUSTED_POOL_LIMIT(75000), "PoolLimits"), 0x8);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools25ms_pPtrNodeDoubleLinkPoolE")) = 
-        AllocatePool(cfg->GetInt("PtrNodeDouble", ADJUSTED_POOL_LIMIT(3200), "PoolLimits"), 0xC);
+        AllocatePool(cfg->GetInt("PtrNodeDouble", ADJUSTED_POOL_LIMIT(6000), "PoolLimits"), 0xC);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools21ms_pEntryInfoNodePoolE")) = 
         AllocatePool(cfg->GetInt("EntryInfoNode", ADJUSTED_POOL_LIMIT(500), "PoolLimits"), 20);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools11ms_pPedPoolE")) = 
@@ -17,11 +17,11 @@ DECL_HOOKv(PoolsInit)
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools15ms_pVehiclePoolE")) = 
         AllocatePool(cfg->GetInt("Vehicles", ADJUSTED_POOL_LIMIT(110), "PoolLimits"), 2604);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools16ms_pBuildingPoolE")) = 
-        AllocatePool(cfg->GetInt("Buildings", ADJUSTED_POOL_LIMIT(13000), "PoolLimits"), 0x3C);
+        AllocatePool(cfg->GetInt("Buildings", ADJUSTED_POOL_LIMIT(14000), "PoolLimits"), 0x3C);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools14ms_pObjectPoolE")) = 
         AllocatePool(cfg->GetInt("Objects", ADJUSTED_POOL_LIMIT(350), "PoolLimits"), 420);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools13ms_pDummyPoolE")) = 
-        AllocatePool(cfg->GetInt("Dummies", ADJUSTED_POOL_LIMIT(2500), "PoolLimits"), 0x3C);
+        AllocatePool(cfg->GetInt("Dummies", ADJUSTED_POOL_LIMIT(3500), "PoolLimits"), 0x3C);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools16ms_pColModelPoolE")) = 
         AllocatePool(cfg->GetInt("ColModel", ADJUSTED_POOL_LIMIT(10150), "PoolLimits"), 48);
     *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN6CPools12ms_pTaskPoolE")) = 

@@ -291,7 +291,7 @@ __attribute__((optnone)) __attribute__((naked)) void StreamZoneModels_Patch1(voi
 void PatchVehicles()
 {
     // Car Groups (cargrp.dat)
-    if(*(uint32_t*)(pGameAddr + 0x677364) == 0x009F4262)
+    /*if(*(uint32_t*)(pGameAddr + 0x677364) == 0x009F4262)
     {
         groupsCount = cfg->GetInt("CarGroups", ADJUSTED_POOL_LIMIT(23), "Vehicles");
         if(groupsCount > 127) groupsCount = 127;
@@ -343,5 +343,7 @@ void PatchVehicles()
         StreamZoneModels_Continue = pGameAddr + 0x2D7C62 + 0x1;
         StreamZoneModels_Break =    pGameAddr + 0x2D7DE4 + 0x1;
         aml->Redirect(pGameAddr + 0x2D7DDC + 0x1, (uintptr_t)StreamZoneModels_Patch1);
-    }
+
+        logger->Info("CarGroups limit is %d", groupsCount);
+    }*/
 }
