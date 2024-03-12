@@ -288,6 +288,13 @@ __attribute__((optnone)) __attribute__((naked)) void StreamZoneModels_Patch1(voi
     asm("BX R12");
 }
 
+DECL_HOOKv(InitVehicleMI)
+{
+    auto& pool = *(CSAPool**)(aml->GetSym(hGameHndl, "_ZN17CVehicleModelInfo17CVehicleStructure11m_pInfoPoolE"));
+    pool = AllocatePool(cfg->GetInt("VehicleStructs", ADJUSTED_POOL_LIMIT(50), "Vehicles"), 812);
+    InitVehicleMI();
+}
+
 void PatchVehicles()
 {
     // Car Groups (cargrp.dat)
@@ -346,4 +353,8 @@ void PatchVehicles()
 
         logger->Info("CarGroups limit is %d", groupsCount);
     }*/
+
+    // Vehicle Structs
+    HOOKBLX(InitVehicleMI, pGameAddr + 0x466AD2 + 0x1);
+    aml->PlaceB(pGameAddr + 0x468B76 + 0x1, pGameAddr + 0x468BD8 + 0x1);
 }
