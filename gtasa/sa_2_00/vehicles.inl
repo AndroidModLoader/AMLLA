@@ -357,4 +357,8 @@ void PatchVehicles()
     // Vehicle Structs
     HOOKBLX(InitVehicleMI, pGameAddr + 0x466AD2 + 0x1);
     aml->PlaceB(pGameAddr + 0x468B76 + 0x1, pGameAddr + 0x468BD8 + 0x1);
+
+    // DesiredNumberOfVehiclesLoaded
+
+    // Car generators
 }

@@ -194,6 +194,16 @@ void PatchMisc()
 
     // Occluders
     PatchOccluders();
+
+    // Minimum number of iterations in LoadAllRequestedModels
+    int iters = cfg->GetInt("LoadModelsIterations", ADJUSTED_POOL_LIMIT(10), "Misc");
+    if(iters > 255) iters = 255;
+    else if(iters < 10) iters = 10;
+    aml->Write8(pGameAddr + 0x2D4662, (uint8_t)iters);
+    aml->Write8(pGameAddr + 0x2D466E, (uint8_t)iters);
+
+    // Tracks.dat max filesize is 46384 bytes
+    // 57C84A
 }
 
 // CLASS DESCRIPTION
