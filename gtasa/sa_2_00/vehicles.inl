@@ -309,19 +309,19 @@ void PatchVehicles()
         aml->WriteAddr(pGameAddr + 0x677364, CarGroups);
 
         // LoadCarGroups
+        aml->Write8(pGameAddr + 0x47500E + 0x2, (uint8_t)groupsAccess);
         aml->Write8(pGameAddr + 0x4750A8 + 0x0, (uint8_t)groupsAccess);
         aml->Write8(pGameAddr + 0x4750C4 + 0x2, (uint8_t)groupsCount - 1);
         aml->Write8(pGameAddr + 0x4750E0 + 0x2, (uint8_t)groupsCount - 1);
         aml->Write8(pGameAddr + 0x4750EE + 0x2, (uint8_t)groupsCount);
         aml->Write8(pGameAddr + 0x475124 + 0x0, (uint8_t)groupsCount - 1);
-        aml->Write8(pGameAddr + 0x47500E + 0x2, (uint8_t)groupsAccess);
         // ChooseCarModelToLoad
         aml->Write8(pGameAddr + 0x2EC430 + 0x0, (uint8_t)groupsAccess);
         // ChooseModel
         aml->Write8(pGameAddr + 0x2EA5F6 + 0x0, (uint8_t)groupsAccess);
         // IsCarModelNeededInCurrentZone
-        aml->Write8(pGameAddr + 0x2D826E + 0x0, (uint8_t)groupsAccess);
         aml->Write8(pGameAddr + 0x2D822E + 0x0, (uint8_t)groupsAccess);
+        aml->Write8(pGameAddr + 0x2D826E + 0x0, (uint8_t)groupsAccess);
         CARGRP_PATCH(1, 2D8236, 2D8242);
         CARGRP_PATCH(2, 2D81B0, 2D81B8);
         CARGRP_PATCH(3, 2D8178, 2D8180);
@@ -337,7 +337,11 @@ void PatchVehicles()
         CARGRP_PATCH(8, 2D34AE, 2D34B8);
         CARGRP_PATCH(9, 2D3474, 2D347C);
         // StreamZoneModels_Gangs
+        aml->Write8(pGameAddr + 0x2D7880 + 0x2, (uint8_t)groupsAccess);
+        aml->Write8(pGameAddr + 0x2D79EE + 0x2, (uint8_t)groupsAccess);
+        aml->Write8(pGameAddr + 0x2D7A62 + 0x2, (uint8_t)groupsAccess);
         aml->Write8(pGameAddr + 0x2D7B58 + 0x2, (uint8_t)groupsAccess);
+        aml->Write8(pGameAddr + 0x2D7DD8 + 0x0, (uint8_t)groupsAccess);
         CARGRP_PATCH(10, 2D7C74, 2D7C80);
         CARGRP_PATCH(11, 2D7CCC, 2D7CD4);
         CARGRP_PATCH(12, 2D7D30, 2D7D38);
@@ -350,8 +354,6 @@ void PatchVehicles()
         StreamZoneModels_Continue = pGameAddr + 0x2D7C62 + 0x1;
         StreamZoneModels_Break =    pGameAddr + 0x2D7DE4 + 0x1;
         aml->Redirect(pGameAddr + 0x2D7DDC + 0x1, (uintptr_t)StreamZoneModels_Patch1);
-
-        logger->Info("CarGroups limit is %d", groupsCount);
     }
 
     // Vehicle Structs
