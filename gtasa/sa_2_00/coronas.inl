@@ -1,27 +1,22 @@
-
-//patch
-
 char* aNewCoronas;
 int coronasCount, coronasStruct;
+void (*UpdateRegisteredCorona)(char*);
 DECL_HOOKv(CoronasInit)
 {
     CoronasInit();
-    for(int i = 64 * 0x3C; i < coronasStruct; i += 0x3C)
+    for(int i = 0; i < coronasStruct; i += 0x3C)
     {
         *(int*)(aNewCoronas + i + 12) = 0;
     }
 }
-
-uintptr_t Coronas_Update_Continue, Coronas_Update_Break;
-extern "C" uintptr_t Coronas_Update_Inject(int val)
+DECL_HOOKv(CoronasUpdate)
 {
-    return val == coronasStruct ? Coronas_Update_Break : Coronas_Update_Continue;
-}
-__attribute__((optnone)) __attribute__((naked)) void Coronas_Update_Patch(void)
-{
-    asm("MOV R0, R4");
-    asm("BL Coronas_Update_Inject");
-    asm("BX R0");
+    CoronasUpdate();
+    for(int i = 0; i < coronasStruct; i += 0x3C)
+    {
+        int registeredCorona = *(int*)(aNewCoronas + i + 12);
+        if(registeredCorona) UpdateRegisteredCorona(aNewCoronas + i);
+    }
 }
 
 uintptr_t Coronas_Render_Continue, Coronas_Render_Break;
@@ -59,29 +54,29 @@ extern "C" uintptr_t Coronas_Register1_Inject(int val)
 __attribute__((optnone)) __attribute__((naked)) void Coronas_Register1_Patch(void)
 {
     asm("UXTH.W R3, LR");
-    asm("PUSH {R0-R2}");
+    asm("PUSH {R0-R2,LR}");
     asm("MOV R0, R3");
     asm("BL Coronas_Register1_Inject");
     asm("MOV R12, R0");
-    asm("POP {R0-R2}");
+    asm("POP {R0-R2,LR}");
     asm("BX R12");
 }
 
 uintptr_t Coronas_Register2_Continue, Coronas_Register2_Equal, Coronas_Register2_Break;
 extern "C" uintptr_t Coronas_Register2_Inject(int val)
 {
-    if(val < coronasCount) return Coronas_Register2_Continue;
-    if(val == coronasCount) return Coronas_Register2_Equal;
+    if(val < 64) return Coronas_Register2_Continue;
+    if(val == 64) return Coronas_Register2_Equal;
     return Coronas_Register2_Break;
 }
 __attribute__((optnone)) __attribute__((naked)) void Coronas_Register2_Patch(void)
 {
     asm("UXTH.W R6, LR");
-    asm("PUSH {R0-R2}");
+    asm("PUSH {R0-R3,LR}");
     asm("MOV R0, R6");
     asm("BL Coronas_Register2_Inject");
     asm("MOV R12, R0");
-    asm("POP {R0-R2}");
+    asm("POP {R0-R3,LR}");
     asm("BX R12");
 }
 
@@ -94,9 +89,12 @@ extern "C" uintptr_t Coronas_UpdateCoors_Inject(int val)
 }
 __attribute__((optnone)) __attribute__((naked)) void Coronas_UpdateCoors_Patch(void)
 {
+    asm("PUSH {R0-R3,LR}");
     asm("MOV R0, R12");
     asm("BL Coronas_UpdateCoors_Inject");
-    asm("BX R0");
+    asm("MOV R12, R0");
+    asm("POP {R0-R3,LR}");
+    asm("BX R12");
 }
 
 uintptr_t Coronas_Entity_Continue, Coronas_Entity_Equal, Coronas_Entity_Break;
@@ -108,8 +106,7 @@ extern "C" uintptr_t Coronas_Entity_Inject(int val)
 }
 __attribute__((optnone)) __attribute__((naked)) void Coronas_Entity_Patch(void)
 {
-    asm("UXTH R1, R0");
-    asm("MOV R12, R1");
+    asm("MOV R12, R0");
     asm("PUSH {R0-R3}");
     asm("MOV R0, R12");
     asm("BL Coronas_Entity_Inject");
@@ -122,19 +119,20 @@ __attribute__((optnone)) __attribute__((naked)) void Coronas_Entity_Patch(void)
 
 void PatchCoronas()
 {
-    if(*(uint32_t*)(pGameAddr + 0x676C44) == 0x00A25B44)
+    if(*(uint32_t*)(pGameAddr + 0x676C44) == (pGameAddr + 0x00A25B44))
     {
         coronasCount = cfg->GetInt("Coronas", ADJUSTED_POOL_LIMIT(4 * 64), "PoolLimits"); // doing x4 cuz it's good for mods
         coronasStruct = coronasCount * 0x3C;
-        aNewCoronas = new char[coronasStruct] {0};
-        aml->WriteAddr(pGameAddr + 0x676C44, (uintptr_t)&aNewCoronas);
+        aNewCoronas = new char[coronasStruct];
+        aml->WriteAddr(pGameAddr + 0x676C44, (uintptr_t)aNewCoronas);
 
         // Init
+        aml->PlaceB(pGameAddr + 0x5A3826 + 0x1, pGameAddr + 0x5A3832 + 0x1);
         HOOKBLX(CoronasInit, pGameAddr + 0x472FD8 + 0x1);
         // Update
-        Coronas_Update_Continue = pGameAddr + 0x5A2304 + 0x1;
-        Coronas_Update_Break =    pGameAddr + 0x5A231A + 0x1;
-        aml->Redirect(pGameAddr + 0x5A2314 + 0x1, (uintptr_t)Coronas_Update_Patch);
+        aml->PlaceB(pGameAddr + 0x5A2304 + 0x1, pGameAddr + 0x5A231A + 0x1);
+        HOOKBLX(CoronasUpdate, pGameAddr + 0x3F426E + 0x1);
+        SET_TO(UpdateRegisteredCorona, aml->GetSym(hGameHndl, "_ZN17CRegisteredCorona6UpdateEv"));
         // Render
         Coronas_Render_Continue = pGameAddr + 0x5A24E2 + 0x1;
         Coronas_Render_Break =    pGameAddr + 0x5A2B0E + 0x1;

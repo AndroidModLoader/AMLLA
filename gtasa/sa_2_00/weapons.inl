@@ -4,7 +4,7 @@ char* winfos;
 
 void PatchWeapons()
 {
-    if(*(uint32_t*)(pGameAddr + 0x678ED0) == 0x00A86288)
+    if(*(uint32_t*)(pGameAddr + 0x678ED0) == (pGameAddr + 0x00A86288))
     {
         winfoCount = cfg->GetInt("WeaponInfos", ADJUSTED_POOL_LIMIT(80), "Weapons");
         winfoStruct = winfoCount * 0x70;

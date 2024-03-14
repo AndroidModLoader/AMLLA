@@ -21,12 +21,15 @@ __attribute__((optnone)) __attribute__((naked)) void SLights_Add_Patch(void)
 uintptr_t SLights_Process_Continue, SLights_Process_Break;
 extern "C" uintptr_t SLights_Process_Inject(int val)
 {
-    return val == slightsStruct ? SLights_Process_Break : SLights_Process_Continue;
+    logger->Info("SLights_Process_Inject");
+    return val >= slightsStruct ? SLights_Process_Break : SLights_Process_Continue;
 }
 __attribute__((optnone)) __attribute__((naked)) void SLights_Process_Patch(void)
 {
     asm("MOV R0, R8");
+    asm("PUSH {LR}");
     asm("BL SLights_Process_Inject");
+    asm("POP {LR}");
     asm("BX R0");
 }
 
@@ -44,7 +47,7 @@ __attribute__((optnone)) __attribute__((naked)) void SLights_Render_Patch(void)
 
 void PatchSearchlights()
 {
-    if(*(uint32_t*)(pGameAddr + 0x6797B4) == 0x0081A118)
+    if(*(uint32_t*)(pGameAddr + 0x6797B4) == (pGameAddr + 0x0081A118))
     {
         slightsCount = cfg->GetInt("SearchLights", ADJUSTED_POOL_LIMIT(8), "Scripts");
         slightsStruct = 0x7C * slightsStruct;
@@ -59,7 +62,7 @@ void PatchSearchlights()
         // ProcessAllSearchLights
         SLights_Process_Continue = pGameAddr + 0x3582FE + 0x1;
         SLights_Process_Break =    pGameAddr + 0x35871C + 0x1;
-        aml->Redirect(pGameAddr + 0x358714 + 0x1, (uintptr_t)SLights_Process_Patch);
+        //aml->Redirect(pGameAddr + 0x358714 + 0x1, (uintptr_t)SLights_Process_Patch); // crash
         // Render
         SLights_Render_Continue = pGameAddr + 0x358812 + 0x1;
         SLights_Render_Break =    pGameAddr + 0x358908 + 0x1;

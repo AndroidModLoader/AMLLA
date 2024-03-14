@@ -298,7 +298,7 @@ DECL_HOOKv(InitVehicleMI)
 void PatchVehicles()
 {
     // Car Groups (cargrp.dat)
-    /*if(*(uint32_t*)(pGameAddr + 0x677364) == 0x009F4262)
+    /*if(*(uint32_t*)(pGameAddr + 0x677364) == (pGameAddr + 0x009F4262))
     {
         groupsCount = cfg->GetInt("CarGroups", ADJUSTED_POOL_LIMIT(23), "Vehicles");
         if(groupsCount > 127) groupsCount = 127;
