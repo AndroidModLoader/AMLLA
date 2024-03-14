@@ -298,7 +298,7 @@ DECL_HOOKv(InitVehicleMI)
 void PatchVehicles()
 {
     // Car Groups (cargrp.dat)
-    /*if(*(uint32_t*)(pGameAddr + 0x677364) == (pGameAddr + 0x009F4262))
+    if(*(uint32_t*)(pGameAddr + 0x677364) == (pGameAddr + 0x009F4262))
     {
         groupsCount = cfg->GetInt("CarGroups", ADJUSTED_POOL_LIMIT(23), "Vehicles");
         if(groupsCount > 127) groupsCount = 127;
@@ -306,7 +306,7 @@ void PatchVehicles()
         groupsStruct = groupsCount * 0x44;
 
         CarGroups = new char[groupsStruct] {0};
-        aml->WriteAddr(pGameAddr + 0x677364, (uintptr_t)&CarGroups);
+        aml->WriteAddr(pGameAddr + 0x677364, CarGroups);
 
         // LoadCarGroups
         aml->Write8(pGameAddr + 0x4750A8 + 0x0, (uint8_t)groupsAccess);
@@ -352,7 +352,7 @@ void PatchVehicles()
         aml->Redirect(pGameAddr + 0x2D7DDC + 0x1, (uintptr_t)StreamZoneModels_Patch1);
 
         logger->Info("CarGroups limit is %d", groupsCount);
-    }*/
+    }
 
     // Vehicle Structs
     HOOKBLX(InitVehicleMI, pGameAddr + 0x466AD2 + 0x1);

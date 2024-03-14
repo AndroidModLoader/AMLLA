@@ -96,6 +96,7 @@ DECL_HOOKb(FxMemPoolInit, int self)
 #include "sa_2_00/weapons.inl"
 #include "sa_2_00/vehicles.inl"
 #include "sa_2_00/entities.inl"
+#include "sa_2_00/occluders.inl"
 
 // GENERIC FUNCTIONS
 static void PatchPools()
@@ -177,7 +178,8 @@ DECL_HOOKv(InitMatrixArray)
 // Scripts
 void PatchScripts()
 {
-    PatchSearchlights();
+    // Searchlights are crashing because of a CLEO..?
+    //PatchSearchlights();
 }
 
 // Misc
@@ -187,7 +189,11 @@ DECL_HOOK(void*, ExtraObjectsDir_New, void* self, int count)
 }
 void PatchMisc()
 {
+    // ExtraObjectsDir
     HOOKBLX(ExtraObjectsDir_New, pGameAddr + 0x46BCE4 + 0x1);
+
+    // Occluders
+    PatchOccluders();
 }
 
 // CLASS DESCRIPTION

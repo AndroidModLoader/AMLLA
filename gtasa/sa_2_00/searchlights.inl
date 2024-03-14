@@ -53,7 +53,7 @@ void PatchSearchlights()
         slightsStruct = 0x7C * slightsStruct;
 
         ScriptSearchLights = new char[slightsStruct];
-        aml->WriteAddr(pGameAddr + 0x6797B4, &ScriptSearchLights);
+        aml->WriteAddr(pGameAddr + 0x6797B4, ScriptSearchLights);
 
         // AddScriptSearchLight
         SLights_Add_Continue = pGameAddr + 0x357B38 + 0x1;
@@ -62,7 +62,7 @@ void PatchSearchlights()
         // ProcessAllSearchLights
         SLights_Process_Continue = pGameAddr + 0x3582FE + 0x1;
         SLights_Process_Break =    pGameAddr + 0x35871C + 0x1;
-        //aml->Redirect(pGameAddr + 0x358714 + 0x1, (uintptr_t)SLights_Process_Patch); // crash
+        aml->Redirect(pGameAddr + 0x358714 + 0x1, (uintptr_t)SLights_Process_Patch); // crash
         // Render
         SLights_Render_Continue = pGameAddr + 0x358812 + 0x1;
         SLights_Render_Break =    pGameAddr + 0x358908 + 0x1;

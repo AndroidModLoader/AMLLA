@@ -45,6 +45,29 @@ __attribute__((optnone)) __attribute__((naked)) void StreamingObjectsInstances_P
     asm("BX R0");
 }
 
+int alphaentities;
+uintptr_t AlphaEntityList_BackTo;
+LinkListSA *m_alphaEntityList;
+extern "C" uintptr_t AlphaEntityList_Inject()
+{
+    LinkListSA::LinkSA* data = new LinkListSA::LinkSA[alphaentities];
+    m_alphaEntityList->usedhead.next = &m_alphaEntityList->usedtail;
+    m_alphaEntityList->usedtail.next = &m_alphaEntityList->usedhead;
+    m_alphaEntityList->freehead.next = &m_alphaEntityList->freetail;
+    m_alphaEntityList->freetail.next = &m_alphaEntityList->freehead;
+    m_alphaEntityList->data =          data;
+    for(int i = alphaentities - 1; i >= 0; --i)
+    {
+        m_alphaEntityList->data[i].insert(&m_alphaEntityList->freehead);
+    }
+    return AlphaEntityList_BackTo;
+}
+__attribute__((optnone)) __attribute__((naked)) void AlphaEntityList_Patch(void)
+{
+    asm("BL AlphaEntityList_Inject");
+    asm("BX R0");
+}
+
 void PatchEntityPointers()
 {
     // VisibleEntityPtrs
@@ -55,10 +78,8 @@ void PatchEntityPointers()
         int visibleEnts = cfg->GetInt("VisibleEntityPointers", ADJUSTED_POOL_LIMIT(1000), "Entities");
 
         VisibleEntityPtrs = new void*[visibleEnts] {0};
-        aml->WriteAddr(pGameAddr + 0x6778F4, (uintptr_t)&VisibleEntityPtrs);
+        aml->WriteAddr(pGameAddr + 0x6778F4, VisibleEntityPtrs);
     }
-
-    // 5D452E
 
     // StreamingObjectsInstances
     if(*(uint32_t*)(pGameAddr + 0x46BE20) == 0x6050F244)
@@ -68,4 +89,13 @@ void PatchEntityPointers()
         StreamingObjectsInstances_BackTo = pGameAddr + 0x46BEA0 + 0x1;
         aml->Redirect(pGameAddr + 0x46BE20 + 0x1, (uintptr_t)StreamingObjectsInstances_Patch);
     }
+
+    // AlphaEntityList (needs additional work here)
+    /*if(*(uint32_t*)(pGameAddr + 0x5D452E) == 0x607AF44F)
+    {
+        SET_TO(m_alphaEntityList, aml->GetSym(hGameHndl, "_ZN18CVisibilityPlugins17m_alphaEntityListE"));
+        alphaentities = cfg->GetInt("AlphaEntityList", ADJUSTED_POOL_LIMIT(200), "Entities");
+        AlphaEntityList_BackTo = pGameAddr + 0x5D45AC + 0x1;
+        aml->Redirect(pGameAddr + 0x5D452E + 0x1, (uintptr_t)AlphaEntityList_Patch);
+    }*/
 }

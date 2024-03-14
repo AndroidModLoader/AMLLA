@@ -1,3 +1,5 @@
+// patch
+
 char* aNewCoronas;
 int coronasCount, coronasStruct;
 void (*UpdateRegisteredCorona)(char*);
@@ -124,7 +126,7 @@ void PatchCoronas()
         coronasCount = cfg->GetInt("Coronas", ADJUSTED_POOL_LIMIT(4 * 64), "PoolLimits"); // doing x4 cuz it's good for mods
         coronasStruct = coronasCount * 0x3C;
         aNewCoronas = new char[coronasStruct];
-        aml->WriteAddr(pGameAddr + 0x676C44, (uintptr_t)aNewCoronas);
+        aml->WriteAddr(pGameAddr + 0x676C44, aNewCoronas);
 
         // Init
         aml->PlaceB(pGameAddr + 0x5A3826 + 0x1, pGameAddr + 0x5A3832 + 0x1);

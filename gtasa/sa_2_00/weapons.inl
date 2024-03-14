@@ -10,6 +10,6 @@ void PatchWeapons()
         winfoStruct = winfoCount * 0x70;
 
         winfos = new char[winfoStruct];
-        aml->WriteAddr(pGameAddr + 0x678ED0, &winfos);
+        aml->WriteAddr(pGameAddr + 0x678ED0, winfos);
     }
 }
